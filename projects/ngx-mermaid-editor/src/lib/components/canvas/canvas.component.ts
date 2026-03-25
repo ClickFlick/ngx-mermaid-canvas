@@ -135,28 +135,20 @@ export class CanvasComponent implements AfterViewInit, OnDestroy {
   private initGraph(): void {
     const container = this.containerRef.nativeElement;
 
-    // Disable browser context menu (we use our own)
-    InternalEvent.disableContextMenu(container);
+    // Suppress browser context menu — we handle it ourselves via onContextMenu()
+    container.addEventListener('contextmenu', (e) => e.preventDefault());
 
-    // Close context menu on any click anywhere
+    // Close context menu on any left-click anywhere
     const closeContextMenu = (e: MouseEvent) => {
       if (this.contextMenu) {
-        // Don't close if clicking inside the context menu itself
         const target = e.target as HTMLElement;
         if (target.closest('.context-menu')) return;
         this.zone.run(() => this.contextMenu = null);
       }
     };
-    const closeOnRightClick = () => {
-      if (this.contextMenu) {
-        this.zone.run(() => this.contextMenu = null);
-      }
-    };
     document.addEventListener('mousedown', closeContextMenu);
-    document.addEventListener('contextmenu', closeOnRightClick);
     this.documentListeners.push(
       () => document.removeEventListener('mousedown', closeContextMenu),
-      () => document.removeEventListener('contextmenu', closeOnRightClick),
     );
 
     this.graph = new Graph(container);
