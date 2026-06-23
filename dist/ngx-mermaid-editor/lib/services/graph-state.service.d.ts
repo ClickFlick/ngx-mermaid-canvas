@@ -28,6 +28,8 @@ export declare class GraphStateService {
     readonly canvasMode: WritableSignal<CanvasMode>;
     /** When in connect mode, the source node ID awaiting a target click */
     readonly connectSource: WritableSignal<string | null>;
+    /** When true, all interaction is disabled */
+    readonly disabled: WritableSignal<boolean>;
     private nodeCounter;
     constructor(serializer: MermaidSerializerService, deserializer: MermaidDeserializerService, layout: LayoutService);
     /** Called when the visual canvas changes the model */

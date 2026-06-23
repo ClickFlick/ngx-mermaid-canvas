@@ -33,6 +33,9 @@ export class GraphStateService {
   /** When in connect mode, the source node ID awaiting a target click */
   readonly connectSource: WritableSignal<string | null> = signal(null);
 
+  /** When true, all interaction is disabled */
+  readonly disabled: WritableSignal<boolean> = signal(false);
+
   private nodeCounter = 0;
 
   constructor(

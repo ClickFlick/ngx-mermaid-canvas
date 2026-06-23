@@ -23,27 +23,29 @@ import { FlowchartModel, FlowDirection, MermaidShape, MermaidEdgeType } from '..
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="editor-root">
-      <lib-toolbar
-        (undoClicked)="canvasRef?.undo()"
-        (redoClicked)="canvasRef?.redo()"
-        (deleteClicked)="canvasRef?.deleteSelected()"
-        (autoLayoutClicked)="canvasRef?.autoLayout()"
-        (fitClicked)="canvasRef?.fitToPage()"
-        (zoomInClicked)="canvasRef?.zoomIn()"
-        (zoomOutClicked)="canvasRef?.zoomOut()"
-        (edgeTypeChanged)="canvasRef?.setEdgeType($event)"
-      />
+    <div class="editor-root" [class.disabled]="disabled()">
+      @if (!disabled()) {
+        <lib-toolbar
+          (undoClicked)="canvasRef?.undo()"
+          (redoClicked)="canvasRef?.redo()"
+          (deleteClicked)="canvasRef?.deleteSelected()"
+          (autoLayoutClicked)="canvasRef?.autoLayout()"
+          (fitClicked)="canvasRef?.fitToPage()"
+          (zoomInClicked)="canvasRef?.zoomIn()"
+          (zoomOutClicked)="canvasRef?.zoomOut()"
+          (edgeTypeChanged)="canvasRef?.setEdgeType($event)"
+        />
+      }
 
       <div class="editor-body">
         <div class="left-pane" [style.flex]="leftFlex()">
-          @if (showPalette()) {
+          @if (showPalette() && !disabled()) {
             <lib-shape-palette (shapeSelected)="onShapeSelected($event)" />
           }
           <lib-canvas #canvas />
         </div>
 
-        @if (showTextEditor() || showPreview()) {
+        @if ((showTextEditor() || showPreview()) && !disabled()) {
           <div
             class="split-handle"
             (mousedown)="onSplitDragStart($event)"
@@ -62,6 +64,10 @@ import { FlowchartModel, FlowDirection, MermaidShape, MermaidEdgeType } from '..
   `,
   styles: [`
     :host { display: block; width: 100%; height: 100%; }
+    .editor-root.disabled {
+      pointer-events: none;
+      user-select: none;
+    }
     .editor-root {
       display: flex;
       flex-direction: column;
@@ -117,6 +123,7 @@ export class MermaidEditorComponent implements OnInit, AfterViewInit {
   showTextEditor = input<boolean>(true);
   showPreview = input<boolean>(true);
   showPalette = input<boolean>(true);
+  disabled = input<boolean>(false);
 
   // Outputs
   mermaidTextChange = output<string>();
@@ -135,6 +142,7 @@ export class MermaidEditorComponent implements OnInit, AfterViewInit {
     if (initial) {
       this.state.initFromText(initial);
     }
+    this.state.disabled.set(this.disabled());
   }
 
   ngAfterViewInit(): void {

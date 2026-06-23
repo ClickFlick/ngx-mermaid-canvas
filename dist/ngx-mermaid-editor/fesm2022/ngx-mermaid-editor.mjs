@@ -386,6 +386,8 @@ class GraphStateService {
     canvasMode = signal('select');
     /** When in connect mode, the source node ID awaiting a target click */
     connectSource = signal(null);
+    /** When true, all interaction is disabled */
+    disabled = signal(false);
     nodeCounter = 0;
     constructor(serializer, deserializer, layout) {
         this.serializer = serializer;
@@ -512,6 +514,16 @@ class CanvasComponent {
             effect(() => {
                 const mode = this.state.canvasMode();
                 this.zone.runOutsideAngular(() => this.applyMode(mode));
+            });
+            // React to disabled state
+            effect(() => {
+                const disabled = this.state.disabled();
+                this.zone.runOutsideAngular(() => {
+                    this.graph.setEnabled(!disabled);
+                    if (disabled) {
+                        this.containerRef.nativeElement.style.cursor = 'default';
+                    }
+                });
             });
         });
     }
@@ -1586,6 +1598,7 @@ class MermaidEditorComponent {
     showTextEditor = input(true);
     showPreview = input(true);
     showPalette = input(true);
+    disabled = input(false);
     // Outputs
     mermaidTextChange = output();
     modelChange = output();
@@ -1600,6 +1613,7 @@ class MermaidEditorComponent {
         if (initial) {
             this.state.initFromText(initial);
         }
+        this.state.disabled.set(this.disabled());
     }
     ngAfterViewInit() {
         runInInjectionContext(this.injector, () => {
@@ -1642,28 +1656,30 @@ class MermaidEditorComponent {
         document.addEventListener('mouseup', onUp);
     }
     static ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "19.2.20", ngImport: i0, type: MermaidEditorComponent, deps: [], target: i0.ɵɵFactoryTarget.Component });
-    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "19.2.20", type: MermaidEditorComponent, isStandalone: true, selector: "ngx-mermaid-editor", inputs: { mermaidText: { classPropertyName: "mermaidText", publicName: "mermaidText", isSignal: true, isRequired: false, transformFunction: null }, direction: { classPropertyName: "direction", publicName: "direction", isSignal: true, isRequired: false, transformFunction: null }, showTextEditor: { classPropertyName: "showTextEditor", publicName: "showTextEditor", isSignal: true, isRequired: false, transformFunction: null }, showPreview: { classPropertyName: "showPreview", publicName: "showPreview", isSignal: true, isRequired: false, transformFunction: null }, showPalette: { classPropertyName: "showPalette", publicName: "showPalette", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { mermaidTextChange: "mermaidTextChange", modelChange: "modelChange" }, viewQueries: [{ propertyName: "canvasRef", first: true, predicate: ["canvas"], descendants: true }], ngImport: i0, template: `
-    <div class="editor-root">
-      <lib-toolbar
-        (undoClicked)="canvasRef?.undo()"
-        (redoClicked)="canvasRef?.redo()"
-        (deleteClicked)="canvasRef?.deleteSelected()"
-        (autoLayoutClicked)="canvasRef?.autoLayout()"
-        (fitClicked)="canvasRef?.fitToPage()"
-        (zoomInClicked)="canvasRef?.zoomIn()"
-        (zoomOutClicked)="canvasRef?.zoomOut()"
-        (edgeTypeChanged)="canvasRef?.setEdgeType($event)"
-      />
+    static ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "17.0.0", version: "19.2.20", type: MermaidEditorComponent, isStandalone: true, selector: "ngx-mermaid-editor", inputs: { mermaidText: { classPropertyName: "mermaidText", publicName: "mermaidText", isSignal: true, isRequired: false, transformFunction: null }, direction: { classPropertyName: "direction", publicName: "direction", isSignal: true, isRequired: false, transformFunction: null }, showTextEditor: { classPropertyName: "showTextEditor", publicName: "showTextEditor", isSignal: true, isRequired: false, transformFunction: null }, showPreview: { classPropertyName: "showPreview", publicName: "showPreview", isSignal: true, isRequired: false, transformFunction: null }, showPalette: { classPropertyName: "showPalette", publicName: "showPalette", isSignal: true, isRequired: false, transformFunction: null }, disabled: { classPropertyName: "disabled", publicName: "disabled", isSignal: true, isRequired: false, transformFunction: null } }, outputs: { mermaidTextChange: "mermaidTextChange", modelChange: "modelChange" }, viewQueries: [{ propertyName: "canvasRef", first: true, predicate: ["canvas"], descendants: true }], ngImport: i0, template: `
+    <div class="editor-root" [class.disabled]="disabled()">
+      @if (!disabled()) {
+        <lib-toolbar
+          (undoClicked)="canvasRef?.undo()"
+          (redoClicked)="canvasRef?.redo()"
+          (deleteClicked)="canvasRef?.deleteSelected()"
+          (autoLayoutClicked)="canvasRef?.autoLayout()"
+          (fitClicked)="canvasRef?.fitToPage()"
+          (zoomInClicked)="canvasRef?.zoomIn()"
+          (zoomOutClicked)="canvasRef?.zoomOut()"
+          (edgeTypeChanged)="canvasRef?.setEdgeType($event)"
+        />
+      }
 
       <div class="editor-body">
         <div class="left-pane" [style.flex]="leftFlex()">
-          @if (showPalette()) {
+          @if (showPalette() && !disabled()) {
             <lib-shape-palette (shapeSelected)="onShapeSelected($event)" />
           }
           <lib-canvas #canvas />
         </div>
 
-        @if (showTextEditor() || showPreview()) {
+        @if ((showTextEditor() || showPreview()) && !disabled()) {
           <div
             class="split-handle"
             (mousedown)="onSplitDragStart($event)"
@@ -1679,7 +1695,7 @@ class MermaidEditorComponent {
         }
       </div>
     </div>
-  `, isInline: true, styles: [":host{display:block;width:100%;height:100%}.editor-root{display:flex;flex-direction:column;width:100%;height:100%;border:1px solid #e0e0e0;border-radius:4px;overflow:hidden;font-family:Inter,system-ui,-apple-system,sans-serif}.editor-body{display:flex;flex:1;overflow:hidden}.left-pane{display:flex;min-width:200px;overflow:hidden;position:relative}.split-handle{width:5px;cursor:col-resize;background:#e0e0e0;flex-shrink:0;transition:background .15s}.split-handle:hover,.split-handle:active{background:#b0c4ff}.right-pane{display:flex;flex-direction:column;min-width:200px;overflow:hidden}.right-pane>*{flex:1;min-height:0}.right-pane>*:not(:last-child){border-bottom:1px solid #e0e0e0}\n"], dependencies: [{ kind: "component", type: CanvasComponent, selector: "lib-canvas" }, { kind: "component", type: ShapePaletteComponent, selector: "lib-shape-palette", outputs: ["shapeSelected"] }, { kind: "component", type: TextEditorComponent, selector: "lib-text-editor" }, { kind: "component", type: PreviewComponent, selector: "lib-preview" }, { kind: "component", type: ToolbarComponent, selector: "lib-toolbar", outputs: ["undoClicked", "redoClicked", "deleteClicked", "autoLayoutClicked", "fitClicked", "zoomInClicked", "zoomOutClicked", "edgeTypeChanged"] }], changeDetection: i0.ChangeDetectionStrategy.OnPush });
+  `, isInline: true, styles: [":host{display:block;width:100%;height:100%}.editor-root.disabled{pointer-events:none;-webkit-user-select:none;user-select:none}.editor-root{display:flex;flex-direction:column;width:100%;height:100%;border:1px solid #e0e0e0;border-radius:4px;overflow:hidden;font-family:Inter,system-ui,-apple-system,sans-serif}.editor-body{display:flex;flex:1;overflow:hidden}.left-pane{display:flex;min-width:200px;overflow:hidden;position:relative}.split-handle{width:5px;cursor:col-resize;background:#e0e0e0;flex-shrink:0;transition:background .15s}.split-handle:hover,.split-handle:active{background:#b0c4ff}.right-pane{display:flex;flex-direction:column;min-width:200px;overflow:hidden}.right-pane>*{flex:1;min-height:0}.right-pane>*:not(:last-child){border-bottom:1px solid #e0e0e0}\n"], dependencies: [{ kind: "component", type: CanvasComponent, selector: "lib-canvas" }, { kind: "component", type: ShapePaletteComponent, selector: "lib-shape-palette", outputs: ["shapeSelected"] }, { kind: "component", type: TextEditorComponent, selector: "lib-text-editor" }, { kind: "component", type: PreviewComponent, selector: "lib-preview" }, { kind: "component", type: ToolbarComponent, selector: "lib-toolbar", outputs: ["undoClicked", "redoClicked", "deleteClicked", "autoLayoutClicked", "fitClicked", "zoomInClicked", "zoomOutClicked", "edgeTypeChanged"] }], changeDetection: i0.ChangeDetectionStrategy.OnPush });
 }
 i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "19.2.20", ngImport: i0, type: MermaidEditorComponent, decorators: [{
             type: Component,
@@ -1690,27 +1706,29 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "19.2.20", ngImpo
                         PreviewComponent,
                         ToolbarComponent,
                     ], changeDetection: ChangeDetectionStrategy.OnPush, template: `
-    <div class="editor-root">
-      <lib-toolbar
-        (undoClicked)="canvasRef?.undo()"
-        (redoClicked)="canvasRef?.redo()"
-        (deleteClicked)="canvasRef?.deleteSelected()"
-        (autoLayoutClicked)="canvasRef?.autoLayout()"
-        (fitClicked)="canvasRef?.fitToPage()"
-        (zoomInClicked)="canvasRef?.zoomIn()"
-        (zoomOutClicked)="canvasRef?.zoomOut()"
-        (edgeTypeChanged)="canvasRef?.setEdgeType($event)"
-      />
+    <div class="editor-root" [class.disabled]="disabled()">
+      @if (!disabled()) {
+        <lib-toolbar
+          (undoClicked)="canvasRef?.undo()"
+          (redoClicked)="canvasRef?.redo()"
+          (deleteClicked)="canvasRef?.deleteSelected()"
+          (autoLayoutClicked)="canvasRef?.autoLayout()"
+          (fitClicked)="canvasRef?.fitToPage()"
+          (zoomInClicked)="canvasRef?.zoomIn()"
+          (zoomOutClicked)="canvasRef?.zoomOut()"
+          (edgeTypeChanged)="canvasRef?.setEdgeType($event)"
+        />
+      }
 
       <div class="editor-body">
         <div class="left-pane" [style.flex]="leftFlex()">
-          @if (showPalette()) {
+          @if (showPalette() && !disabled()) {
             <lib-shape-palette (shapeSelected)="onShapeSelected($event)" />
           }
           <lib-canvas #canvas />
         </div>
 
-        @if (showTextEditor() || showPreview()) {
+        @if ((showTextEditor() || showPreview()) && !disabled()) {
           <div
             class="split-handle"
             (mousedown)="onSplitDragStart($event)"
@@ -1726,7 +1744,7 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "19.2.20", ngImpo
         }
       </div>
     </div>
-  `, styles: [":host{display:block;width:100%;height:100%}.editor-root{display:flex;flex-direction:column;width:100%;height:100%;border:1px solid #e0e0e0;border-radius:4px;overflow:hidden;font-family:Inter,system-ui,-apple-system,sans-serif}.editor-body{display:flex;flex:1;overflow:hidden}.left-pane{display:flex;min-width:200px;overflow:hidden;position:relative}.split-handle{width:5px;cursor:col-resize;background:#e0e0e0;flex-shrink:0;transition:background .15s}.split-handle:hover,.split-handle:active{background:#b0c4ff}.right-pane{display:flex;flex-direction:column;min-width:200px;overflow:hidden}.right-pane>*{flex:1;min-height:0}.right-pane>*:not(:last-child){border-bottom:1px solid #e0e0e0}\n"] }]
+  `, styles: [":host{display:block;width:100%;height:100%}.editor-root.disabled{pointer-events:none;-webkit-user-select:none;user-select:none}.editor-root{display:flex;flex-direction:column;width:100%;height:100%;border:1px solid #e0e0e0;border-radius:4px;overflow:hidden;font-family:Inter,system-ui,-apple-system,sans-serif}.editor-body{display:flex;flex:1;overflow:hidden}.left-pane{display:flex;min-width:200px;overflow:hidden;position:relative}.split-handle{width:5px;cursor:col-resize;background:#e0e0e0;flex-shrink:0;transition:background .15s}.split-handle:hover,.split-handle:active{background:#b0c4ff}.right-pane{display:flex;flex-direction:column;min-width:200px;overflow:hidden}.right-pane>*{flex:1;min-height:0}.right-pane>*:not(:last-child){border-bottom:1px solid #e0e0e0}\n"] }]
         }], propDecorators: { canvasRef: [{
                 type: ViewChild,
                 args: ['canvas']

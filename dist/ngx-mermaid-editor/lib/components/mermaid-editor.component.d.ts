@@ -9,6 +9,7 @@ export declare class MermaidEditorComponent implements OnInit, AfterViewInit {
     showTextEditor: import("@angular/core").InputSignal<boolean>;
     showPreview: import("@angular/core").InputSignal<boolean>;
     showPalette: import("@angular/core").InputSignal<boolean>;
+    disabled: import("@angular/core").InputSignal<boolean>;
     mermaidTextChange: import("@angular/core").OutputEmitterRef<string>;
     modelChange: import("@angular/core").OutputEmitterRef<FlowchartModel>;
     leftFlex: import("@angular/core").WritableSignal<string>;
@@ -21,5 +22,5 @@ export declare class MermaidEditorComponent implements OnInit, AfterViewInit {
     onShapeSelected(shape: MermaidShape): void;
     onSplitDragStart(event: MouseEvent): void;
     static ɵfac: i0.ɵɵFactoryDeclaration<MermaidEditorComponent, never>;
-    static ɵcmp: i0.ɵɵComponentDeclaration<MermaidEditorComponent, "ngx-mermaid-editor", never, { "mermaidText": { "alias": "mermaidText"; "required": false; "isSignal": true; }; "direction": { "alias": "direction"; "required": false; "isSignal": true; }; "showTextEditor": { "alias": "showTextEditor"; "required": false; "isSignal": true; }; "showPreview": { "alias": "showPreview"; "required": false; "isSignal": true; }; "showPalette": { "alias": "showPalette"; "required": false; "isSignal": true; }; }, { "mermaidTextChange": "mermaidTextChange"; "modelChange": "modelChange"; }, never, never, true, never>;
+    static ɵcmp: i0.ɵɵComponentDeclaration<MermaidEditorComponent, "ngx-mermaid-editor", never, { "mermaidText": { "alias": "mermaidText"; "required": false; "isSignal": true; }; "direction": { "alias": "direction"; "required": false; "isSignal": true; }; "showTextEditor": { "alias": "showTextEditor"; "required": false; "isSignal": true; }; "showPreview": { "alias": "showPreview"; "required": false; "isSignal": true; }; "showPalette": { "alias": "showPalette"; "required": false; "isSignal": true; }; "disabled": { "alias": "disabled"; "required": false; "isSignal": true; }; }, { "mermaidTextChange": "mermaidTextChange"; "modelChange": "modelChange"; }, never, never, true, never>;
 }

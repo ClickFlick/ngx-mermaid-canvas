@@ -170,6 +170,17 @@ export class CanvasComponent implements AfterViewInit, OnDestroy {
         const mode = this.state.canvasMode();
         this.zone.runOutsideAngular(() => this.applyMode(mode));
       });
+
+      // React to disabled state
+      effect(() => {
+        const disabled = this.state.disabled();
+        this.zone.runOutsideAngular(() => {
+          this.graph.setEnabled(!disabled);
+          if (disabled) {
+            this.containerRef.nativeElement.style.cursor = 'default';
+          }
+        });
+      });
     });
   }
 
